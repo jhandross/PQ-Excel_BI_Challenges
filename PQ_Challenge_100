@@ -1,0 +1,37 @@
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+
+df = xl("A1:D7", headers=True)
+
+df['From Date'] = pd.to_datetime(df['From Date'], format='%d/%m/%Y')
+df['To Date'] = df['To Date'].apply(lambda x: pd.to_datetime(x, format='%d/%m/%Y') if pd.notna(x) else pd.to_datetime('31/12/2022', format='%d/%m/%Y'))
+df['Rate'] = df['Rate'].astype(int)
+
+def calculate_working_days(start_date, end_date):
+    total_days = np.busday_count(start_date.date(), end_date.date())
+    return total_days
+
+quarters = {
+    'Q1': (datetime(2022, 1, 1), datetime(2022, 3, 31)),
+    'Q2': (datetime(2022, 4, 1), datetime(2022, 6, 30)),
+    'Q3': (datetime(2022, 7, 1), datetime(2022, 9, 30)),
+    'Q4': (datetime(2022, 10, 1), datetime(2022, 12, 31))
+}
+
+result = pd.DataFrame(columns=['Name', 'Q1', 'Q2', 'Q3', 'Q4'])
+
+for name, group in df.groupby('Name'):
+    quarterly_amounts = {'Name': name}
+    for q, (start_date, end_date) in quarters.items():
+        total_amount = 0
+        for _, row in group.iterrows():
+            period_start = max(row['From Date'], start_date)
+            period_end = min(row['To Date'], end_date)
+            if period_start <= period_end:
+                working_days = calculate_working_days(period_start, period_end + timedelta(days=1))
+                total_amount += working_days * row['Rate']
+        quarterly_amounts[q] = total_amount
+    result = result._append(quarterly_amounts, ignore_index=True)
+
+result

@@ -1,0 +1,31 @@
+data = xl("A1:B7", headers=True)
+
+def is_stepping_number(n):
+    n_str = str(n)
+    for i in range(len(n_str) - 1):
+        if abs(int(n_str[i]) - int(n_str[i + 1])) != 1:
+            return False
+    return True
+
+min_stepping_numbers = []
+max_stepping_numbers = []
+count_stepping_numbers = []
+
+for index, row in df.iterrows():
+    stepping_numbers = [i for i in range(row['From'], row['To'] + 1) if is_stepping_number(i)]
+    
+    if stepping_numbers:
+        min_stepping_numbers.append(min(stepping_numbers))
+        max_stepping_numbers.append(max(stepping_numbers))
+        count_stepping_numbers.append(len(stepping_numbers))
+    else:
+        min_stepping_numbers.append(None)
+        max_stepping_numbers.append(None)
+        count_stepping_numbers.append(0)
+
+df['Min'] = min_stepping_numbers
+df['Max'] = max_stepping_numbers
+df['Count'] = count_stepping_numbers
+df.drop(columns=['From', 'To'], inplace=True)
+
+df

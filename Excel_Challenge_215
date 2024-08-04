@@ -1,0 +1,48 @@
+from datetime import datetime
+
+def calculate_total_spend_for_ranges(date_ranges, rates_people):
+    def calculate_total_spend(date_range, rates_people):
+        total_spend = 0
+        start_date = datetime.strptime(date_range[0], '%d/%m/%Y')
+        end_date = datetime.strptime(date_range[1], '%d/%m/%Y')
+        
+        for rp in rates_people:
+            rp_start = datetime.strptime(rp[0], '%d/%m/%Y')
+            rp_end = datetime.strptime(rp[1], '%d/%m/%Y')
+            rate = rp[2]
+            people = rp[3]
+            
+            overlap_start = max(start_date, rp_start)
+            overlap_end = min(end_date, rp_end)
+            
+            if overlap_start <= overlap_end:
+                num_days = (overlap_end - overlap_start).days + 1
+                total_spend += num_days * rate * people
+        
+        return total_spend
+    
+    results = []
+    for date_range in date_ranges:
+        total_spend = calculate_total_spend(date_range, rates_people)
+        results.append(total_spend)
+    
+    return results
+
+rates_people = [
+    ('20/01/2011', '03/06/2015', 5, 8),
+    ('04/06/2015', '31/12/2019', 10, 12),
+    ('01/01/2020', '31/12/2020', 20, 5),
+    ('01/01/2021', '15/06/2021', 25, 9),
+    ('16/06/2021', '28/05/2023', 50, 3)
+]
+
+date_ranges = [
+    ('21/01/2011', '30/01/2011'),
+    ('01/06/2015', '10/06/2015'),
+    ('25/12/2020', '18/06/2021')
+]
+
+total_spends = calculate_total_spend_for_ranges(date_ranges, rates_people)
+
+df_results = pd.DataFrame({'From Date': [r[0] for r in date_ranges], 'To Date': [r[1] for r in date_ranges], 'Total Spend': total_spends})
+df_results

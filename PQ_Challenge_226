@@ -1,0 +1,29 @@
+df = xl("A1:D13", headers=True)
+df['Dept ID'].ffill(inplace=True)
+
+def process_employee_data(dept_id, employee_data, promoted=False):
+    rows = []
+    if pd.notna(employee_data):
+        for emp in employee_data.split(', '):
+            parts = emp.split('-')
+            name = parts[0]
+            salary = parts[1] if len(parts) > 1 else None
+            promotion_date = pd.to_datetime(parts[2], format='%d/%m/%Y', errors='coerce').strftime('%d/%m/%Y') if promoted and len(parts) > 2 else None
+            rows.append((dept_id, name, promotion_date, salary))
+    return rows
+
+processed_employees = {}
+for idx, row in df.iterrows():
+    dept_id = row['Dept ID']
+    if pd.notna(row['Promoted Employees']):
+        for emp in process_employee_data(dept_id, row['Promoted Employees'], promoted=True):
+            processed_employees[(dept_id, emp[1])] = emp
+    if pd.notna(row['Not Promoted Employees']):
+        for emp in process_employee_data(dept_id, row['Not Promoted Employees']):
+            if (dept_id, emp[1]) not in processed_employees:
+                processed_employees[(dept_id, emp[1])] = emp
+
+final_df = pd.DataFrame(list(processed_employees.values()), columns=['Dept ID', 'Emp Names', 'Promotion Date', 'Salary'])
+final_df.sort_values(by=['Dept ID', 'Emp Names'], inplace=True)
+final_df.reset_index(drop=True, inplace=True)
+final_df.fillna(' ')

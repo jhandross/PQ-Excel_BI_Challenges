@@ -1,0 +1,28 @@
+df = xl("A1:B731", headers=True)
+df["quarter"], df["year"], df["month"], df["month_num"] = pd.PeriodIndex(
+    df["Date"], freq="Q").quarter,\
+    df["Date"].dt.year,\
+    df["Date"].dt.strftime("%b"),\
+    df["Date"].dt.month
+
+res = (df.groupby(["year", "quarter", "month", "month_num"])["Sale"].sum().reset_index()
+         .sort_values(["year", "month_num"])
+         .assign(years_row=lambda x: x.groupby("year").cumcount() + 1,
+                 sales_perc=lambda x: x["Sale"] / x.groupby("year")["Sale"].transform("sum"),
+                 quarter_row=lambda x: x.groupby(["year", "quarter"]).cumcount() + 1,
+                 display_year=lambda x: np.where(x["years_row"] == 1, x["year"], np.nan),
+                 display_quarter=lambda x: np.where(x["quarter_row"] == 1, x["quarter"], np.nan))
+         .rename(columns={"display_year": "Year", "display_quarter": "Quarter", "month": "Month"})
+         .reindex(columns=["year", "Year", "Quarter", "Month", "month_num", "Sale", "sales_perc"]))
+
+tots = (res.groupby("year").agg({"Sale": "sum", "sales_perc": "sum"}).reset_index()
+          .assign(Year=lambda x: x["year"].astype(str) + " Total", Quarter=' ', Month=' ', month_num=np.nan)
+          .reindex(columns=["year", "Year", "Quarter", "Month", "month_num", "Sale", "sales_perc"]))
+
+result_df = (pd.concat([res, tots]).sort_values(["year", "month_num"]).reset_index(drop=True)
+               .drop(columns=["year", "month_num"])
+               .assign(sales_perc=lambda x: (x["sales_perc"] * 100).round(2).astype(str) + '%')
+               .rename(columns={"sales_perc": "Sale %", "Sale": "Total Sale"})
+               .fillna(' '))
+
+result_df

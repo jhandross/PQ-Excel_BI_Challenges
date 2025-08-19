@@ -131,7 +131,5 @@ kmin, out_grid, order = compute_min_sets_and_grid(grid, row_shifts, col_shifts, 
 print(f"Permutation order: {order}")
 print(f"Minimum equivalent Sets for {target_sets}: {kmin}")
 
-# Return the resulting grid as a nicely labeled DataFrame
-col_headers = [str(x) for x in col_shifts]     # use column-shifts as headers (like your screenshot)
-result_df = pd.DataFrame(out_grid, columns=col_headers)
-result_df
+# Return the resulting grid
+out_grid
